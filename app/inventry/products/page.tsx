@@ -1,11 +1,28 @@
 'use client'
 
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from "next/link"
 
 import productsData from './sample/dummy_products.json'
-import { useForm } from 'react-hook-form';
-import { describe } from 'node:test';
+import { useForm, Controller } from 'react-hook-form';
+import {
+    Alert,
+    AlertColor,
+    Box,
+    Button,
+    IconButton,
+    Paper,
+    Snackbar,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography,
+} from "@mui/material"
+import {Add as AddIcon, Cancel as CancelIcon, Update as UpdateIcon, Delete as DeleteIcon} from "@mui/icons-material"
 
 type ProductData = {
     id: number | null;
@@ -16,18 +33,45 @@ type ProductData = {
 
 export default function Page() {
     const {
-        register,
+        control,
         handleSubmit,
         reset,
-        formState: {errors},
     } = useForm()
 
+    //検証ルール
+    const validationRules = {
+        name: {
+            required: "入力必須項目です",
+            maxLength: {value: 100, message: "100文字以内の商品名を入力してください"}
+        },
+        price: {
+            required: "入力必須項目です",
+            min: {value: 1, message: "1から99999999の数値を入力してください"},
+            max: {value: 99999999, message: "1から99999999の数値を入力してください"}
+        },
+        description: {
+            required: "入力必須項目です"
+        }
+    }
+ 
     //読み込みデータ保持
     const [data, setData] = useState<Array<ProductData>>([]);
+    const [open, setOpen] = useState(false);
+    const [severity, setSeverity] = useState<AlertColor>('success');
+    const [message, setMessage] = useState('');
+    const result = (severity: AlertColor, message: string) => {
+        setOpen(true);
+        setSeverity(severity);
+        setMessage(message);
+    };
+
+    const handleClose = (event: any, reason: any) => {
+        setOpen(false);
+    };
 
     useEffect(() => {
         setData(productsData);
-    }, []);
+    }, [open]);
 
     const [id, setId] = useState<number | null>(0);
     //submit時のactionを分岐させる
@@ -39,6 +83,7 @@ export default function Page() {
             price: Number(event.price),
             description: event.description,
         };
+        console.log(data)
         //actionによってHTTPメソッドと使用するパラメーターを切り替える
         if (action === "add") {
             handleAdd(data);
@@ -68,7 +113,7 @@ export default function Page() {
         setId(0);
     };
     const handleAdd = (data: ProductData) => {
-        //バックエンドを使用した処理を呼ぶ
+        result('success', '商品が登録されました');
         setId(0);
     };
 
@@ -86,95 +131,222 @@ export default function Page() {
         setId(0);
     };
     const handleEdit = (data: ProductData) => {
+        result('success', '商品が更新されました');
         setId(0);
     };
     const handleDelete = (id: number) => {
+        result('success', '商品が削除されました');
         setId(0);
     };
 
     return(
-        <div>
-            <h2>商品一覧</h2>
-            <button type='button' onClick={handleShownNewRow}>商品を追加する</button>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>商品ID</th>
-                            <th>商品名</th>
-                            <th>単価</th>
-                            <th>説明</th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {id === null ? (
-                            <tr>
-                                <td></td>
-                                <td>
-                                    <input type="text" id='name' { ...register("name", {required: true, maxLength: 100})} />
-                                    {errors.name && (
-                                        <div>100文字以内の商品名を入力してください</div>
-                                    )}
-                                </td>
-                                <td>
-                                    <input type="number" id='price' { ...register("price", {required: true, min: 1, max: 99999999,})} />
-                                    {errors.price && (
-                                        <div>1から99999999の数値を入力してください</div>
-                                    )}
-                                </td>
-                                <td>
-                                    <input type="text" id='description' {...register("description")} />
-                                </td>
-                                {/* ルーティングのために追加 */}
-                                <td></td>
-                                <td><button onClick={() => handleAddCancel()}>キャンセル</button>
-                                    <button onClick={() => setAction("add")}>登録する</button>
-                                </td>
-                            </tr>
-                        ) : "" }
-                        {data.map((data: any) => (
-                            id === data.id ? (
-                                <tr key={data.id}>
-                                    <td>{data.id}</td>
-                                    <td>
-                                        <input type="text" id='name' { ...register("name", {required: true, maxLength: 100})} />
-                                        {errors.name && (
-                                            <div>100文字以内の商品名を入力してください</div>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <input type="number" id='price' { ...register("price", {required: true, min: 1, max: 99999999,})} />
-                                        {errors.price && (
-                                            <div>1から99999999の数値を入力してください</div>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <input type="text" id='description' {...register("description")} />
-                                    </td>
-                                    <td></td>
-                                    <td><button onClick={() => handleEditCancel()}>キャンセル</button>
-                                        <button onClick={() => setAction("update")}>更新する</button>
-                                        <button onClick={() => setAction("delete")}>削除する</button>
-                                    </td>
-                                </tr>
-                            ) : (
-                                <tr key={data.id}>
-                                    <td>{data.id}</td>
-                                    <td>{data.name}</td>
-                                    <td>{data.price}</td>
-                                    <td>{data.description}</td>
-                                    <td><Link href={`/inventry/products/${data.id}`}>在庫確認</Link></td>
-                                    <td>
-                                        <button onClick={() => handleEditRow(data.id)}>更新・削除</button>
-                                    </td>
-                                </tr>
-                            )
-                        ))}
-                    </tbody>
-                </table>
-            </form>
-        </div>
+        <>
+            <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+                <Alert severity={severity}>{message}</Alert>
+            </Snackbar>
+            <Typography variant='h5'>商品一覧</Typography>
+            <Button
+                variant='contained'
+                startIcon={<AddIcon />}
+                onClick={() => handleShownNewRow()}
+            >
+                商品を追加する
+            </Button>
+            <Box 
+                component="form"
+                onSubmit={handleSubmit(onSubmit)}
+                sx={{height: 400, width: "100%"}}    
+            >
+                <TableContainer component={Paper}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>商品ID</TableCell>
+                                <TableCell>商品名</TableCell>
+                                <TableCell>単価</TableCell>
+                                <TableCell>説明</TableCell>
+                                <TableCell></TableCell>
+                                <TableCell></TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {id === null ? (
+                                <TableRow>
+                                    <TableCell></TableCell>
+                                    <TableCell>
+                                        <Controller
+                                            name='name'
+                                            control={control}
+                                            rules={validationRules.name}
+                                            render={({field, fieldState}) => (
+                                                <TextField
+                                                    {...field}
+                                                    type='text'
+                                                    label='商品名'
+                                                    error={fieldState.invalid}
+                                                    helperText={fieldState.error?.message}
+                                                />
+                                            )}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Controller
+                                            name='price'
+                                            control={control}
+                                            rules={validationRules.price}
+                                            render={({field, fieldState}) => (
+                                                <TextField
+                                                    {...field}
+                                                    type='number'
+                                                    label='価格'
+                                                    error={fieldState.invalid}
+                                                    helperText={fieldState.error?.message}
+                                                />
+                                            )}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Controller
+                                            name='description'
+                                            control={control}
+                                            rules={validationRules.description}
+                                            render={({field, fieldState}) => (
+                                                <TextField
+                                                    {...field}
+                                                    type='text'
+                                                    label='商品説明'
+                                                    error={fieldState.invalid}
+                                                    helperText={fieldState.error?.message}
+                                                />
+                                            )}
+                                        />
+                                    </TableCell>
+                                    {/* ルーティングのために追加 */}
+                                    <TableCell></TableCell>
+                                    <TableCell>
+                                        <Button 
+                                            variant='outlined'
+                                            startIcon={<CancelIcon/>}
+                                            onClick={() => handleAddCancel()}
+                                        >
+                                            キャンセル
+                                        </Button>
+                                        <Button 
+                                            variant='outlined'
+                                            startIcon={<AddIcon />}
+                                            onClick={() => setAction("add")}
+                                            type='submit'
+                                        >
+                                            登録する
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ) : "" }
+                            {data.map((data: any) => (
+                                id === data.id ? (
+                                    <TableRow key={data.id}>
+                                        <TableCell>{data.id}</TableCell>
+                                        <TableCell>
+                                            <Controller
+                                                name='name'
+                                                control={control}
+                                                rules={validationRules.name}
+                                                render={({field, fieldState}) => (
+                                                    <TextField
+                                                        {...field}
+                                                        type='text'
+                                                        label='商品名'
+                                                        error={fieldState.invalid}
+                                                        helperText={fieldState.error?.message}
+                                                        value={data.name}
+                                                    />
+                                                )}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Controller
+                                                name='price'
+                                                control={control}
+                                                rules={validationRules.price}
+                                                render={({field, fieldState}) => (
+                                                    <TextField
+                                                        {...field}
+                                                        type='number'
+                                                        label='価格'
+                                                        error={fieldState.invalid}
+                                                        helperText={fieldState.error?.message}
+                                                        value={data.price}
+                                                    />
+                                                )}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Controller
+                                                name='description'
+                                                control={control}
+                                                rules={validationRules.description}
+                                                render={({field, fieldState}) => (
+                                                    <TextField
+                                                        {...field}
+                                                        type='text'
+                                                        label='商品説明'
+                                                        error={fieldState.invalid}
+                                                        helperText={fieldState.error?.message}
+                                                        value={data.description}
+                                                    />
+                                                )}
+                                            />
+                                        </TableCell>
+                                        <TableCell></TableCell>
+                                        <TableCell>
+                                            <Button 
+                                                variant='outlined'
+                                                startIcon={<CancelIcon/>}
+                                                onClick={() => handleEditCancel()}
+                                            >
+                                                キャンセル
+                                            </Button>
+                                            <Button
+                                                variant='outlined'
+                                                startIcon={<UpdateIcon />}
+                                                onClick={() => setAction("update")}
+                                                type='submit'
+                                            >
+                                                更新する
+                                            </Button>
+                                            <Button
+                                                variant='outlined'
+                                                startIcon={<DeleteIcon />}
+                                                onClick={() => setAction("delete")}
+                                                type='submit'
+                                            >
+                                                削除する
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    <TableRow key={data.id}>
+                                        <TableCell>{data.id}</TableCell>
+                                        <TableCell>{data.name}</TableCell>
+                                        <TableCell>{data.price}</TableCell>
+                                        <TableCell>{data.description}</TableCell>
+                                        <TableCell><Link href={`/inventry/products/${data.id}`}>在庫確認</Link></TableCell>
+                                        <TableCell>
+                                            <Button 
+                                                variant='outlined'
+                                                startIcon={<UpdateIcon />}
+                                                onClick={() => handleEditRow(data.id)}
+                                            >
+                                                更新・削除
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Box>
+        </>
     )
 }
