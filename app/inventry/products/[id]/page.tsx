@@ -1,9 +1,26 @@
 'use client'
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import inventoriesData from '../sample/dummy_inventories.json';
 import productsData from '../sample/dummy_products.json';
 import { useEffect, useState } from 'react';
+import {
+    Alert,
+    AlertColor,
+    Box,
+    Button,
+    IconButton,
+    Paper,
+    Snackbar,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography,
+} from "@mui/material"
 
 import changeDateFormat from './functions/date_format'
 
@@ -26,11 +43,17 @@ type InventoryData = {
 
 export default function Page({params}: {params: {id: number},}) {
     const {
-        register,
+        control,
         handleSubmit,
         reset,
-        formState: {errors},
     } = useForm();
+
+    //検証ルール
+    const validationRules = {
+        quantity: {
+            required: "入力必須項目です",
+        },
+    }
 
     //読み込みデータを保持
     const [product, setProduct] = useState<ProductData>({id: 0, name: '', price: 0, description: ''});
@@ -74,9 +97,22 @@ export default function Page({params}: {params: {id: number},}) {
         }
     };
 
+    const handleClose = (event: any, reason: any) => {
+        setOpen(false);
+    };
+
+    const [open, setOpen] = useState(false);
+    const [severity, setSeverity] = useState<AlertColor>('success');
+    const [message, setMessage] = useState('');
+    const result = (severity: AlertColor, message: string) => {
+        setOpen(true);
+        setSeverity(severity);
+        setMessage(message);
+    };
+
     //仕入れ時実行
     const handlePurchase = (data: InventoryData) => {
-        console.log(data);
+        result('success', '商品を仕入れました');
         reset({
             quantity: '',
         });
@@ -84,7 +120,7 @@ export default function Page({params}: {params: {id: number},}) {
 
     //卸し時実行
     const handleWholesale = (data: InventoryData) => {
-        console.log(data);
+        result('success', '商品を卸しました');
         reset({
             quantity: '',
         });
@@ -92,50 +128,77 @@ export default function Page({params}: {params: {id: number},}) {
 
     return(
         <>
-            <h2>商品在庫管理</h2>
-            <h3>在庫処理</h3>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div>
-                    <label>商品名:</label>
-                    <span>{product.name}</span>
-                </div>
-                <div>
-                    <label>数量:</label>
-                    <input type="text" id='quantity' {...register('quantity', {required: true})}/>
-                    {errors.quantity && (
-                        <div>
-                            個数を入力してください
-                        </div>
+            <Snackbar open={open} autoHideDuration={3000} onClose={handleClose} >
+                <Alert severity={severity}>{message}</Alert>
+            </Snackbar>
+            <Typography variant='h5'>商品在庫管理</Typography>
+            <Typography variant='h6'>在庫処理</Typography>
+            <Box 
+                component='form'
+                onSubmit={handleSubmit(onSubmit)}
+            >
+                <Typography component='span'>商品名: {product.name}</Typography>
+                <Box component='div'>
+                <Controller
+                    name='quantity'
+                    control={control}
+                    rules={validationRules.quantity}
+                    render={({field, fieldState}) => (
+                        <TextField
+                            {...field}
+                            type='number'
+                            label='個数'
+                            error={fieldState.invalid}
+                            helperText={fieldState.error?.message}
+                        />
                     )}
-                </div>
-                <button onClick={() => setAction('purchase')}>商品を仕入れる</button>
-                <button onClick={() => setAction('wholesale')}>商品を卸す</button>
-            </form>
-            <h3>在庫履歴</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>処理種別</th>
-                        <th>処理日時</th>
-                        <th>単価</th>
-                        <th>数量</th>
-                        <th>価格</th>
-                        <th>在庫数</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {data.map((data: InventoryData) => (
-                        <tr key={data.id}>
-                            <td>{data.type}</td>
-                            <td>{data.date}</td>
-                            <td>{data.unit}</td>
-                            <td>{data.quantity}</td>
-                            <td>{data.price}</td>
-                            <td>{data.inventory}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                />
+                </Box>
+                <Button 
+                    variant='outlined'
+                    onClick={() => setAction('purchase')}
+                    type='submit'
+                >
+                    商品を仕入れる
+                </Button>
+                <Button
+                    variant='outlined'
+                    onClick={() => setAction('wholesale')}
+                    type='submit'
+                >
+                    商品を卸す
+                </Button>
+            </Box>
+            <Typography variant='h6'>在庫履歴</Typography>
+            <TableContainer 
+                component={Paper}
+                sx={{width: "100%"}}
+            >
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>処理種別</TableCell>
+                            <TableCell>処理日時</TableCell>
+                            <TableCell>単価</TableCell>
+                            <TableCell>数量</TableCell>
+                            <TableCell>価格</TableCell>
+                            <TableCell>在庫数</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {data.map((data: InventoryData) => (
+                            <TableRow key={data.id}>
+                                <TableCell>{data.type}</TableCell>
+                                <TableCell>{data.date}</TableCell>
+                                <TableCell>{data.unit}</TableCell>
+                                <TableCell>{data.quantity}</TableCell>
+                                <TableCell>{data.price}</TableCell>
+                                <TableCell>{data.inventory}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
         </>
     )
 }
