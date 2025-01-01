@@ -19,6 +19,8 @@ import {
 } from '@mui/material';
 import {Logout as LogoutIcon, Menu as MenuIcon} from '@mui/icons-material';
 import { useRouter } from "next/navigation";
+import axios from "axios";
+axios.defaults.baseURL = 'http://localhost:8000'
 
 declare module "@mui/material/styles" {
     //指定を単純にするためにモバイルとPCの2つに限定する
@@ -55,7 +57,10 @@ export default function InventoryLayout({children}: {children: ReactNode}) {
 
     //ログアウト処理
     const handleLogout = () => {
-        router.replace("/login");
+        axios.post('/api/inventory/logout/')
+        .then((res) => {
+            router.push("/login");
+        })
     };
 
     //開閉対象となるサイドバー本体

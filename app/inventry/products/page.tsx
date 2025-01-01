@@ -3,14 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import Link from "next/link"
 
-import productsData from './sample/dummy_products.json'
 import { useForm, Controller } from 'react-hook-form';
 import {
     Alert,
     AlertColor,
     Box,
     Button,
-    IconButton,
     Paper,
     Snackbar,
     Table,
@@ -23,6 +21,8 @@ import {
     Typography,
 } from "@mui/material"
 import {Add as AddIcon, Cancel as CancelIcon, Update as UpdateIcon, Delete as DeleteIcon} from "@mui/icons-material"
+import axios from 'axios'
+axios.defaults.baseURL = 'http://localhost:8000';
 
 type ProductData = {
     id: number | null;
@@ -70,7 +70,14 @@ export default function Page() {
     };
 
     useEffect(() => {
-        setData(productsData);
+        axios.get('/api/inventory/products/',
+            //これを必ず入れる
+            {withCredentials: true,}
+        )
+        .then((res) => res.data)
+        .then((data) => {
+            setData(data);
+        })
     }, [open]);
 
     const [id, setId] = useState<number | null>(0);

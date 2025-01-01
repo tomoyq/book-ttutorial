@@ -12,6 +12,9 @@ import {
 } from '@mui/material'
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
+import axios from 'axios';
+import { useState } from 'react';
+axios.defaults.baseURL = 'http://localhost:8000'
 
 type FormData = {
     username: string,
@@ -25,6 +28,8 @@ export default function Page() {
     } = useForm();
     const router = useRouter();
 
+    const [authError, setAuthError] = useState("");
+
     //検証ルール
     const validationRules = {
         username: {
@@ -32,7 +37,7 @@ export default function Page() {
         },
         password: {
             required: "入力必須項目です",
-            minLength: {value: 8, message: '8文字以上の文字列にしてください'}
+            minLength: {value: 5, message: '5文字以上の文字列にしてください'}
         },
     }
 
@@ -48,7 +53,14 @@ export default function Page() {
     };
 
     const handleLogin = (data: FormData) => {
-        router.push("/inventry/products");
+        axios.post("/api/inventory/login/", data)
+        .then((res) => {
+            router.push("/inventry/products/");
+        })
+        .catch(function (error) {
+            setAuthError("ユーザー名またはパスワードに誤りがあります。")
+        });
+        
     };
 
     return (
@@ -67,6 +79,11 @@ export default function Page() {
                         ログイン
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+                        {authError && (
+                            <Typography variant='body2' color='error'>
+                                {authError}
+                            </Typography>
+                        )}{" "}
                         <Controller
                             name='username'
                             control={control}
