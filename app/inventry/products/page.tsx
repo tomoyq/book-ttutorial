@@ -21,8 +21,7 @@ import {
     Typography,
 } from "@mui/material"
 import {Add as AddIcon, Cancel as CancelIcon, Update as UpdateIcon, Delete as DeleteIcon} from "@mui/icons-material"
-import axios from 'axios'
-axios.defaults.baseURL = 'http://localhost:8000';
+import axios from '../../../plugins/axios';
 
 type ProductData = {
     id: number | null;
@@ -70,10 +69,7 @@ export default function Page() {
     };
 
     useEffect(() => {
-        axios.get('/api/inventory/products/',
-            //これを必ず入れる
-            {withCredentials: true,}
-        )
+        axios.get('/api/inventory/products/')
         .then((res) => res.data)
         .then((data) => {
             setData(data);
@@ -120,7 +116,10 @@ export default function Page() {
         setId(0);
     };
     const handleAdd = (data: ProductData) => {
-        result('success', '商品が登録されました');
+        axios.post('/api/inventory/products/', data)
+        .then((res) => {
+            result('success', '商品が登録されました');
+        })
         setId(0);
     };
 
@@ -131,18 +130,24 @@ export default function Page() {
         reset({
             name: selectedProduct.name,
             price: selectedProduct.price,
-            description: selectedProduct.description,
+            description: selectedProduct.description ? selectedProduct.description : "",
         });
     };
     const handleEditCancel = () => {
         setId(0);
     };
     const handleEdit = (data: ProductData) => {
-        result('success', '商品が更新されました');
+        axios.put(`/api/inventory/products/${data.id}/`, data)
+        .then((res) => {
+            result('success', '商品が更新されました');
+        })
         setId(0);
     };
     const handleDelete = (id: number) => {
-        result('success', '商品が削除されました');
+        axios.delete(`/api/inventory/products/${id}/`)
+        .then((res) => {
+            result('success', '商品が削除されました');
+        })
         setId(0);
     };
 
@@ -265,7 +270,7 @@ export default function Page() {
                                                         label='商品名'
                                                         error={fieldState.invalid}
                                                         helperText={fieldState.error?.message}
-                                                        value={data.name}
+                                                        defaultValue={data.name}
                                                     />
                                                 )}
                                             />
@@ -282,7 +287,7 @@ export default function Page() {
                                                         label='価格'
                                                         error={fieldState.invalid}
                                                         helperText={fieldState.error?.message}
-                                                        value={data.price}
+                                                        defaultValue={data.price}
                                                     />
                                                 )}
                                             />
@@ -299,7 +304,7 @@ export default function Page() {
                                                         label='商品説明'
                                                         error={fieldState.invalid}
                                                         helperText={fieldState.error?.message}
-                                                        value={data.description}
+                                                        defaultValue={data.description}
                                                     />
                                                 )}
                                             />

@@ -12,9 +12,8 @@ import {
 } from '@mui/material'
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
-import axios from 'axios';
+import axios from '../../plugins/axios';
 import { useState } from 'react';
-axios.defaults.baseURL = 'http://localhost:8000'
 
 type FormData = {
     username: string,
